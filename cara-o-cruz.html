@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head>
+<body>
+<title>Vicente: ¿Cara o Cruz?</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Macroeconomics I, Universidad de Alicante. A coin-toss game that reveals your risk aversion and shows Jensen's inequality at work.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&family=STIX+Two+Text:ital,wght@0,400;1,400&display=swap">
+<style>
+/* Layout: one 820px reading column; Explanada-mosaic wave band under the header; tabs Game / Euler lab / Chuleta. */
+:root{
+  --bg:#F4F7F9; --surface:#FFFFFF; --ink:#13263A; --muted:#566879; --line:#D3DCE4;
+  --sea:#13649A; --sea-soft:#E2EEF6; --tile:#A3302A; --tile-soft:#F7E6E3;
+  --stone:#C79A4E; --stone-soft:#F5ECDC; --alien:#79C29A; --alien-dark:#3E8A62; --eye:#FFFFFF;
+  --good:#2C7A4C; --warn:#A8650A; --paper:#FFFEFA;
+  --wave-a:#A3302A; --wave-b:#EFE6D3; --wave-c:#1A1F24;
+  --f-display:"Bricolage Grotesque","Trebuchet MS",sans-serif;
+  --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --f-math:"STIX Two Text","Cambria Math","Times New Roman",serif;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0A1622; --surface:#112131; --ink:#E3EBF2; --muted:#97A8B8; --line:#24384B;
+  --sea:#65B1E0; --sea-soft:#15324A; --tile:#E4685C; --tile-soft:#3A1F1E;
+  --stone:#D6AE68; --stone-soft:#33291A; --alien:#6DB58D; --alien-dark:#2F6E4C; --eye:#F4F7F9;
+  --good:#6CC48E; --warn:#E3A54A; --paper:#162838;
+  --wave-a:#C9483F; --wave-b:#D8CDB6; --wave-c:#04080C; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0A1622; --surface:#112131; --ink:#E3EBF2; --muted:#97A8B8; --line:#24384B;
+  --sea:#65B1E0; --sea-soft:#15324A; --tile:#E4685C; --tile-soft:#3A1F1E;
+  --stone:#D6AE68; --stone-soft:#33291A; --alien:#6DB58D; --alien-dark:#2F6E4C; --eye:#F4F7F9;
+  --good:#6CC48E; --warn:#E3A54A; --paper:#162838;
+  --wave-a:#C9483F; --wave-b:#D8CDB6; --wave-c:#04080C; color-scheme:dark }
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;margin:0}
+.wrap{max-width:820px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.1}
+h1{font-size:clamp(2.4rem,7vw,3.6rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.7rem;font-weight:700;letter-spacing:-.01em}
+h3{font-size:1.15rem;font-weight:700}
+p{margin:0}
+.eyebrow{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.m{font-family:var(--f-math);font-style:italic;font-size:1.08em;white-space:nowrap}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+a{color:var(--sea)}
+
+header.hero{padding-block:28px 18px}
+.hero-grid{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center}
+.hero-grid > div{min-width:0}
+.hero .lede{margin-top:12px;font-size:1.08rem;max-width:58ch;color:var(--muted)}
+.hero .lede strong{color:var(--ink)}
+.pat{width:150px;height:auto}
+@media (max-width:560px){.hero-grid{grid-template-columns:1fr}.pat{width:110px;justify-self:start;order:-1}}
+
+.waves{display:block;width:100%;height:22px}
+.waves .wa{fill:var(--wave-a)} .waves .wb{fill:var(--wave-b)} .waves .wc{fill:var(--wave-c)}
+
+nav.tabs{display:flex;gap:4px;flex-wrap:wrap;padding-block:14px 0;border-bottom:1px solid var(--line)}
+nav.tabs button{font:600 .95rem var(--f-body);color:var(--muted);background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px;cursor:pointer;margin-bottom:-1px}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--tile)}
+nav.tabs button:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+
+main{padding-block:24px 60px}
+section.panel{display:flex;flex-direction:column;gap:22px}
+
+.steps{display:flex;flex-wrap:wrap;gap:6px}
+.steps span{font:600 .78rem var(--f-mono);letter-spacing:.04em;padding:5px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.steps span.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.steps span.done{background:var(--sea-soft);color:var(--sea);border-color:transparent}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px}
+.stack{display:flex;flex-direction:column;gap:14px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.grid2>*,.grid3>*,.grid4>*{min-width:0}
+@media (max-width:640px){.grid2,.grid3{grid-template-columns:1fr}.grid4{grid-template-columns:1fr 1fr}}
+
+.offer{display:inline-flex;gap:10px;align-items:baseline;background:var(--stone-soft);border:1px dashed var(--stone);border-radius:8px;padding:8px 12px;font-family:var(--f-mono);font-size:.9rem}
+.offer b{font-size:1.15rem;color:var(--ink)}
+.budget{font-family:var(--f-math);font-size:1.15rem;background:var(--sea-soft);border-radius:8px;padding:10px 14px;overflow-x:auto}
+
+label.lab{font-weight:600}
+input[type=range]{width:100%;accent-color:var(--tile);height:28px}
+input[type=text],input[type=number]{font:inherit;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.slider-ends{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:.75rem;color:var(--muted)}
+
+.read{border-left:3px solid var(--line);padding:4px 0 4px 12px}
+.read .k{font-size:.8rem;color:var(--muted)}
+.read .v{font:700 1.45rem var(--f-display);font-variant-numeric:tabular-nums}
+.read.y1{border-color:var(--tile)} .read.y2{border-color:var(--sea)} .read.sv{border-color:var(--stone)}
+
+.ticket{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:12px 14px;font-family:var(--f-mono);font-size:.78rem;line-height:1.6;position:relative}
+.ticket::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:6px;background:radial-gradient(circle at 5px 0,transparent 4px,var(--paper) 4.5px) 0 0/10px 6px repeat-x}
+.ticket h4{margin:0 0 6px;font:600 .78rem var(--f-mono);letter-spacing:.1em;text-align:center}
+.ticket .ln{display:flex;justify-content:space-between;gap:8px}
+.ticket .ln span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ticket .tot{border-top:1px dashed var(--muted);margin-top:6px;padding-top:6px;font-weight:600}
+
+.btn{font:600 1rem var(--f-body);border-radius:8px;padding:11px 18px;cursor:pointer;border:1px solid var(--ink);background:var(--ink);color:var(--bg)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.red{background:var(--tile);border-color:var(--tile);color:#fff}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-sm{font-size:.85rem;padding:7px 12px}
+
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-family:var(--f-mono);font-size:11px}
+.chart .ax{stroke:var(--line);stroke-width:1}
+.chart .grid{stroke:var(--line);stroke-width:1;stroke-dasharray:2 4}
+.chart .l-sea{stroke:var(--sea);fill:none;stroke-width:2.5}
+.chart .l-tile{stroke:var(--tile);fill:none;stroke-width:2.5}
+.chart .l-stone{stroke:var(--stone);fill:none;stroke-width:2.5}
+.chart .l-ink{stroke:var(--ink);fill:none;stroke-width:2}
+.chart .l-muted{stroke:var(--muted);fill:none;stroke-width:1.2;stroke-dasharray:4 4}
+.chart .l-thin{stroke-width:1.5;opacity:.55}
+.chart .p-tile{fill:var(--tile)} .chart .p-sea{fill:var(--sea)} .chart .p-stone{fill:var(--stone)} .chart .p-ink{fill:var(--ink)}
+.chart .p-hollow{fill:var(--surface);stroke:var(--ink);stroke-width:2}
+.chart .lbl{fill:var(--ink);font-family:var(--f-body);font-size:12px;font-weight:600}
+.chart .lbl-s{fill:var(--muted);font-family:var(--f-body);font-size:11px}
+.chart .area{fill:var(--sea-soft)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.82rem;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:6px;border-radius:2px}
+
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.tile .k{font-size:.78rem;color:var(--muted)}
+.tile .v{font:800 2rem var(--f-display);font-variant-numeric:tabular-nums;line-height:1.1;margin-top:4px}
+.tile .s{font-size:.78rem;color:var(--muted);margin-top:4px}
+.tile.hl{background:var(--ink);color:var(--bg);border-color:var(--ink)} .tile.hl .k,.tile.hl .s{color:var(--bg);opacity:.75}
+
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.88rem;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;color:var(--muted);font-size:.78rem}
+
+.note{background:var(--sea-soft);border-radius:8px;padding:12px 14px;font-size:.92rem}
+.note.warn{background:var(--stone-soft)}
+.verdict{font-weight:600;padding:10px 14px;border-radius:8px;background:var(--stone-soft)}
+.verdict.ok{background:var(--sea-soft);color:var(--ink)}
+
+.bars{display:grid;grid-template-columns:auto 1fr auto;gap:8px 12px;align-items:center;font-size:.88rem}
+.bar{height:16px;border-radius:3px;transition:width .25s}
+.bar.b1{background:var(--tile)} .bar.b2{background:var(--sea)}
+@media (prefers-reduced-motion:reduce){.bar{transition:none}}
+
+.concept{display:grid;grid-template-columns:120px 1fr;gap:16px;padding-block:18px;border-top:1px solid var(--line)}
+.concept:first-of-type{border-top:0}
+.concept > div{min-width:0}
+.concept .tag{font:600 .75rem var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--tile)}
+.concept .eq{font-family:var(--f-math);font-size:1.15rem;margin-block:6px;overflow-x:auto}
+@media (max-width:560px){.concept{grid-template-columns:1fr;gap:4px}}
+
+textarea.copy{width:100%;font:.8rem var(--f-mono);border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--bg);color:var(--ink);resize:vertical}
+footer{border-top:1px solid var(--line);padding-block:18px 40px;font-size:.82rem;color:var(--muted)}
+</style>
+<style>
+.coins{display:flex;flex-wrap:wrap;gap:4px;min-height:28px}
+.coins span{width:24px;height:24px;border-radius:50%;display:inline-grid;place-items:center;font:700 .7rem var(--f-mono)}
+.coins .h{background:var(--sea);color:var(--bg)} .coins .t{background:var(--stone);color:var(--ink)}
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.choice button{font:600 1.05rem var(--f-body);padding:18px 14px;border-radius:var(--r);border:2px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;text-align:left}
+.choice button small{display:block;font-weight:400;font-size:.85rem;color:var(--muted);margin-top:4px}
+.choice button[aria-pressed="true"]{border-color:var(--tile);background:var(--tile-soft)}
+@media (max-width:520px){.choice{grid-template-columns:1fr}}
+</style>
+
+<div class="wrap">
+<header class="hero">
+  <div class="hero-grid">
+    <div>
+      <div class="eyebrow">Macroeconomics I · Universidad de Alicante · Game 2 · Risk aversion</div>
+      <h1>Vicente: ¿Cara o Cruz?</h1>
+      <p class="lede">Vicente is finishing the Master and his first salary depends on a coin toss. <strong>You choose for Vicente again.</strong> Four choices reveal your risk aversion (<span class="m">σ</span>) and show why, with a concave utility, a gamble is always worth less than its average. That is Jensen's inequality.</p>
+    </div>
+    <svg class="pat" viewBox="0 0 160 180" role="img" aria-label="Vicente the alien tossing a one-euro coin">
+      <line x1="62" y1="42" x2="48" y2="10" stroke="var(--alien-dark)" stroke-width="4" stroke-linecap="round"/>
+      <line x1="98" y1="42" x2="112" y2="10" stroke="var(--alien-dark)" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="48" cy="10" r="7" fill="var(--tile)"/><circle cx="112" cy="10" r="7" fill="var(--stone)"/>
+      <ellipse cx="80" cy="140" rx="40" ry="34" fill="var(--alien)"/>
+      <ellipse cx="80" cy="76" rx="50" ry="44" fill="var(--alien)"/>
+      <ellipse cx="80" cy="72" rx="22" ry="20" fill="var(--eye)"/>
+      <circle cx="90" cy="64" r="10" fill="var(--ink)"/><circle cx="94" cy="60" r="3" fill="var(--eye)"/>
+      <ellipse cx="80" cy="104" rx="8" ry="6" fill="var(--alien-dark)"/>
+      <ellipse cx="122" cy="132" rx="9" ry="6" fill="var(--alien-dark)"/>
+      <g class="coin"><circle cx="138" cy="36" r="17" fill="var(--stone)" stroke="var(--alien-dark)" stroke-width="2"/>
+      <text x="138" y="42" text-anchor="middle" font-family="var(--f-display)" font-weight="800" font-size="16" fill="var(--ink)">1€</text></g>
+      <path d="M124 124 Q132 90 136 60" stroke="var(--muted)" stroke-width="1.5" fill="none" stroke-dasharray="3 4"/>
+    </svg>
+  </div>
+</header>
+</div>
+<svg class="waves" viewBox="0 0 1200 22" preserveAspectRatio="xMidYMid slice" aria-hidden="true" id="waves"></svg>
+<div class="wrap">
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="tab-juego" aria-selected="true" data-view="juego">The game</button>
+    <button role="tab" id="tab-lab" aria-selected="false" data-view="lab">Jensen lab</button>
+    <button role="tab" id="tab-chuleta" aria-selected="false" data-view="chuleta">Chuleta (cheat sheet)</button>
+  </nav>
+
+<main>
+<section class="panel" id="view-juego">
+  <div class="steps" id="steps"></div>
+  <div id="stage"></div>
+</section>
+
+<!-- ================= LAB ================= -->
+<section class="panel" id="view-lab" hidden>
+  <div class="stack">
+    <div class="eyebrow">Lab 1 · Jensen's inequality</div>
+    <h2>The curve, the chord and the gap</h2>
+    <p>Vicente earns <span class="m">L = 12,000 − Δ</span> with cruz and <span class="m">H = 12,000 + Δ</span> with cara, where cara comes up with probability <span class="m">p</span>. The <strong>chord</strong> between <span class="m">u(L)</span> and <span class="m">u(H)</span> gives expected utility <span class="m">E[u(c)]</span>. The <strong>curve</strong> above the average gives <span class="m">u(E[c])</span>. Jensen's inequality says that when <span class="m">u</span> is concave, the chord lies below the curve: <span class="m">E[u(c)] ≤ u(E[c])</span>.</p>
+  </div>
+  <div class="card stack">
+    <div class="grid3">
+      <div><label class="lab" for="j-sigma">Curvature <span class="m">σ</span> = <span class="mono" id="j-sigma-v"></span></label><input type="range" id="j-sigma" min="-3" max="10" step="0.1" value="2"><div class="slider-ends"><span>σ &lt; 0: convex</span><span>σ &gt; 0: concave</span></div></div>
+      <div><label class="lab" for="j-d">Spread <span class="m">Δ</span> = <span class="mono" id="j-d-v"></span></label><input type="range" id="j-d" min="0" max="11000" step="250" value="6000"></div>
+      <div><label class="lab" for="j-p">Probability of cara <span class="m">p</span> = <span class="mono" id="j-p-v"></span></label><input type="range" id="j-p" min="0.05" max="0.95" step="0.05" value="0.5"></div>
+    </div>
+    <div class="verdict" id="j-shape"></div>
+    <div class="grid4">
+      <div class="read sv"><div class="k">Average income <span class="m">E[c]</span></div><div class="v" id="j-m"></div></div>
+      <div class="read y1"><div class="k">Certainty equivalent</div><div class="v" id="j-ce"></div></div>
+      <div class="read y2"><div class="k">Risk premium <span class="m">π</span></div><div class="v" id="j-pi"></div></div>
+      <div class="read"><div class="k">Arrow–Pratt <span class="m">½σVar/E[c]</span></div><div class="v" id="j-ap"></div></div>
+    </div>
+    <svg class="chart" id="j-chart" viewBox="0 0 720 340" role="img" aria-label="Utility curve, chord, certainty equivalent and risk premium"></svg>
+    <div class="legend"><span><i style="background:var(--ink)"></i>u(c), CRRA</span><span><i style="background:var(--stone)"></i>chord: E[u(c)] for every p</span><span><i style="background:var(--sea)"></i>Jensen gap u(E c) − E u(c)</span><span><i style="background:var(--tile)"></i>risk premium π</span></div>
+    <p class="muted" style="font-size:.9rem" id="j-note"></p>
+  </div>
+
+  <div class="card stack">
+    <h3>The risk premium grows with the square of the risk</h3>
+    <p class="muted" style="font-size:.92rem">Exact risk premium for a 50–50 coin of ±Δ around €12,000. Arrow–Pratt says <span class="m">π ≈ ½ · (σ/c̄) · Δ²</span>: double the spread and the premium roughly quadruples.</p>
+    <svg class="chart" id="j-chart2" viewBox="0 0 720 260" role="img" aria-label="Risk premium against spread for several sigma"></svg>
+    <div class="legend"><span><i style="background:var(--stone)"></i>σ = 0.5</span><span><i style="background:var(--ink)"></i>σ = 1</span><span><i style="background:var(--tile)"></i>σ = 2</span><span><i style="background:var(--sea)"></i>σ = 5</span><span>Dot: your σ and Δ from Lab 1, with p = ½</span></div>
+  </div>
+
+  <div class="stack">
+    <div class="eyebrow">Lab 2 · Toss the coin</div>
+    <h2>Averaging utility is not the same as the utility of the average</h2>
+    <p>Toss Vicente's coin from Lab 1 many times. The average income converges to <span class="m">E[c]</span>. The average <em>utility</em> converges to <span class="m">E[u(c)]</span>; here it is shown in euros as <span class="m">u<sup>−1</sup>(average utility)</span>, which converges to the certainty equivalent. The gap between the two lines never closes, however many times you toss. That gap is the risk premium.</p>
+  </div>
+  <div class="card stack">
+    <div class="row"><button class="btn red btn-sm" id="s-1">Toss once</button><button class="btn btn-sm" id="s-100">Toss 100 times</button><button class="btn ghost btn-sm" id="s-0">Reset</button><span class="muted mono" id="s-n" aria-live="polite"></span></div>
+    <div class="coins" id="s-coins" aria-label="Last tosses"></div>
+    <div class="grid3">
+      <div class="read sv"><div class="k">Average income so far</div><div class="v" id="s-avg">—</div></div>
+      <div class="read y1"><div class="k"><span class="m">u<sup>−1</sup></span>(average utility)</div><div class="v" id="s-ce">—</div></div>
+      <div class="read y2"><div class="k">Gap</div><div class="v" id="s-gap">—</div></div>
+    </div>
+    <svg class="chart" id="s-chart" viewBox="0 0 720 280" role="img" aria-label="Running averages of income and utility"></svg>
+    <div class="legend"><span><i style="background:var(--stone)"></i>average income</span><span><i style="background:var(--tile)"></i>u⁻¹(average utility)</span><span><i style="background:var(--muted)"></i>theory: E[c] and CE</span></div>
+  </div>
+</section>
+
+<!-- ================= CHULETA ================= -->
+<section class="panel" id="view-chuleta" hidden>
+  <div class="stack"><div class="eyebrow">Chuleta</div><h2>Risk aversion and Jensen's inequality</h2></div>
+  <div class="card">
+    <div class="concept"><div class="tag">Jensen's inequality</div><div>
+      <div class="eq">u concave ⟹ E[u(c)] ≤ u(E[c])</div>
+      <p>For a concave function, the average of the function lies below the function of the average. Geometrically, the chord between two points lies below the curve. With utility, a gamble gives less utility than receiving its average for sure. Risk aversion <em>is</em> concavity of <span class="m">u</span>. The inequality flips for convex <span class="m">u</span> (risk lovers) and becomes an equality for linear <span class="m">u</span> (risk neutrality).</p>
+    </div></div>
+    <div class="concept"><div class="tag">Certainty equivalent</div><div>
+      <div class="eq">u(CE) = E[u(c)], &nbsp; π = E[c] − CE</div>
+      <p>The certainty equivalent is the sure income valued exactly like the gamble. The risk premium <span class="m">π</span> is what Vicente would give up to get rid of the risk. In Rounds A–C you choose CE directly, and the page inverts it to find your <span class="m">σ</span>.</p>
+    </div></div>
+    <div class="concept"><div class="tag">Arrow–Pratt</div><div>
+      <div class="eq">ARA = −u″(c)/u′(c), &nbsp; RRA = −c u″(c)/u′(c), &nbsp; π ≈ ½ · ARA · Var(c)</div>
+      <p>The premium for a small risk is proportional to its variance and to the curvature of <span class="m">u</span>, measured by absolute risk aversion. Multiplying by <span class="m">c</span> gives relative risk aversion, which is unit-free. For CRRA, RRA = <span class="m">σ</span> at every income level.</p>
+    </div></div>
+    <div class="concept"><div class="tag">CRRA vs CARA</div><div>
+      <div class="eq">CRRA: CE(λL, λH) = λ · CE(L, H); &nbsp; CARA u = −e<sup>−ac</sup>: π depends only on the gamble, not on income</div>
+      <p>Under CRRA, scaling every outcome by <span class="m">λ</span> scales the certainty equivalent and the risk premium by <span class="m">λ</span>. Round C doubles every amount in Round A, so CRRA predicts your premium exactly doubles. Under CARA it rises by more than double, because absolute risk aversion stays fixed while the variance quadruples: between 2 and 4 times, about 3 times for a CARA consumer as risk averse as a σ = 2 CRRA consumer at €12,000.</p>
+    </div></div>
+    <div class="concept"><div class="tag">El Gordo</div><div>
+      <div class="eq">E[prize] = €14 &lt; €20 ticket ⟹ E[u(w + X)] ≤ u(w + E X) &lt; u(w)</div>
+      <p>A décimo of the Lotería de Navidad is a gamble with negative expected value: 70% of ticket sales come back as prizes. Jensen's inequality plus monotonicity means no risk-averse or risk-neutral expected-utility maximiser buys one. Yet millions of Spaniards do. Friedman and Savage (1948) explained it with a utility function that is convex over large gains. Others point to the pleasure of the draw on 22 December, or not wanting to be the only one in the office without the winning number.</p>
+    </div></div>
+    <div class="concept"><div class="tag">One σ, two jobs</div><div>
+      <div class="eq">CRRA: RRA = σ = 1/EIS</div>
+      <p>CRRA uses one parameter for two different attitudes: dislike of risk <em>across states</em> (this game) and dislike of fluctuations <em>across time</em> (Game 1). Data usually want them apart, for example high risk aversion for the equity premium and a moderate EIS for saving. Epstein–Zin (1989) preferences separate them (L18).</p>
+      <p id="game1-link-wrap" style="margin-top:6px" hidden><a id="game1-link" href="#" target="_blank" rel="noopener">Open Game 1 (β and EIS) →</a></p>
+    </div></div>
+  </div>
+</section>
+</main>
+</div>
+<div class="wrap"><footer>Macroeconomics I (49166) · Master in Economics with Data Science · Universidad de Alicante · Fall 2026. Nothing you enter leaves your browser.</footer></div>
+
+<script>
+(function(){
+"use strict";
+var GAME1_URL = "index.html"; // set to the URL of "Vicente en Alicante"
+/* ---------- helpers ---------- */
+function $(s){return document.querySelector(s)}
+function eur(v){var s=Math.round(v);return (s<0?"−":"")+"€"+Math.abs(s).toLocaleString("en-US")}
+function f2(v){return isFinite(v)?v.toFixed(2):"—"} function f3(v){return isFinite(v)?v.toFixed(3):"—"}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function store(k,v){try{if(v===undefined){var x=localStorage.getItem(k);return x?JSON.parse(x):null}localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}}
+
+/* waves: three stacked bands like the Explanada mosaic */
+(function(){var w=$("#waves"),p=40,out="";var cls=["wa","wb","wc"];
+  for(var b=0;b<3;b++){var y0=b*7.3,d="M0 22 L0 "+(y0+4);for(var x=0;x<=1200;x+=p){d+=" Q"+(x+p/4)+" "+(y0-1)+" "+(x+p/2)+" "+(y0+4)+" T"+(x+p)+" "+(y0+4)}d+=" L1200 22 Z";out+='<path class="'+cls[b]+'" d="'+d+'"/>'}
+  w.innerHTML=out})();
+
+/* nice ticks */
+function ticks(a,b,n){var span=b-a,step=Math.pow(10,Math.floor(Math.log10(span/n))),err=span/n/step;if(err>=7.5)step*=10;else if(err>=3.5)step*=5;else if(err>=1.5)step*=2;var t=[],s=Math.ceil(a/step-1e-9)*step;for(var v=s;v<=b+1e-9;v+=step)t.push(+v.toFixed(10));return t}
+/* chart frame: returns {sx,sy,svg pieces} */
+function frame(cfg){
+  var W=cfg.w||720,H=cfg.h||320,L=cfg.left||58,R=cfg.right||18,T=cfg.top||14,B=cfg.bottom||44;
+  var sx=function(v){return L+(v-cfg.x[0])/(cfg.x[1]-cfg.x[0])*(W-L-R)};
+  var sy=function(v){return H-B-(v-cfg.y[0])/(cfg.y[1]-cfg.y[0])*(H-T-B)};
+  var g="";var id="cl"+Math.random().toString(36).slice(2,8);
+  g+='<defs><clipPath id="'+id+'"><rect x="'+L+'" y="'+T+'" width="'+(W-L-R)+'" height="'+(H-T-B)+'"/></clipPath></defs>';
+  (cfg.xt||ticks(cfg.x[0],cfg.x[1],6)).forEach(function(t){g+='<line class="grid" x1="'+sx(t)+'" x2="'+sx(t)+'" y1="'+T+'" y2="'+(H-B)+'"/><text x="'+sx(t)+'" y="'+(H-B+16)+'" text-anchor="middle">'+(cfg.fx?cfg.fx(t):t)+'</text>'});
+  (cfg.yt||ticks(cfg.y[0],cfg.y[1],5)).forEach(function(t){g+='<line class="grid" x1="'+L+'" x2="'+(W-R)+'" y1="'+sy(t)+'" y2="'+sy(t)+'"/><text x="'+(L-8)+'" y="'+(sy(t)+4)+'" text-anchor="end">'+(cfg.fy?cfg.fy(t):t)+'</text>'});
+  g+='<line class="ax" x1="'+L+'" x2="'+(W-R)+'" y1="'+(H-B)+'" y2="'+(H-B)+'"/><line class="ax" x1="'+L+'" x2="'+L+'" y1="'+T+'" y2="'+(H-B)+'"/>';
+  if(cfg.xl)g+='<text x="'+((L+W-R)/2)+'" y="'+(H-6)+'" text-anchor="middle" class="lbl-s">'+cfg.xl+'</text>';
+  if(cfg.yl)g+='<text transform="translate(14 '+((T+H-B)/2)+') rotate(-90)" text-anchor="middle" class="lbl-s">'+cfg.yl+'</text>';
+  return {sx:sx,sy:sy,head:g,clip:'clip-path="url(#'+id+')"',W:W,H:H,L:L,R:R,T:T,B:B};
+}
+function path(pts,sx,sy){return pts.map(function(p,i){return (i?"L":"M")+sx(p[0]).toFixed(1)+" "+sy(p[1]).toFixed(1)}).join(" ")}
+
+
+
+/* ---------- economics (thousand € inside) ---------- */
+function u(c,s){return Math.abs(s-1)<1e-9?Math.log(c):(Math.pow(c,1-s)-1)/(1-s)}
+function up(c,s){return Math.pow(c,-s)}
+function uinv(x,s){return Math.abs(s-1)<1e-9?Math.exp(x):Math.pow((1-s)*x+1,1/(1-s))}
+function ceP(L,H,p,s){ /* cara (H) with prob p */
+  if(Math.abs(s-1)<1e-9)return Math.exp(p*Math.log(H)+(1-p)*Math.log(L));
+  if(Math.abs(s)<1e-9)return p*H+(1-p)*L;
+  return Math.pow(p*Math.pow(H,1-s)+(1-p)*Math.pow(L,1-s),1/(1-s));
+}
+function ceOf(a,b,s){return ceP(a,b,.5,s)}
+function sigmaFromCE(ce,a,b){ /* CE is decreasing in sigma */
+  var lo=-10,hi=60;
+  if(ce>=ceOf(a,b,lo))return {v:lo,cap:"low"};
+  if(ce<=ceOf(a,b,hi))return {v:hi,cap:"high"};
+  for(var i=0;i<80;i++){var m=(lo+hi)/2;if(ceOf(a,b,m)>ce)lo=m;else hi=m}
+  return {v:(lo+hi)/2,cap:""};
+}
+function sgTxt(s){return s.cap==="high"?"≥ 60":(s.cap==="low"?"≤ −10":s.v.toFixed(2))}
+
+var ROUNDS=[
+ {key:"A",L:6,H:18,step:50,title:"Start-up or contrato fijo?",
+  text:"A start-up in the Distrito Digital, on the seafront, offers Vicente a job paid purely on commission. The founders are honest about it: it is a coin toss. The UA offers him a fixed research-assistant contract instead."},
+ {key:"B",L:9,H:15,step:50,title:"A milder coin",
+  text:"A second start-up makes a similar offer with less extreme commissions. The average is still €12,000; only the spread is smaller."},
+ {key:"C",L:12,H:36,step:100,title:"Everything doubles",
+  text:"A business angel invests in the first start-up. Every amount in Round A doubles: €36,000 with cara, €12,000 with cruz. Imagine the UA contract can be doubled too."}
+];
+var S=store("vicenteAlicante2b")||{stage:0,nick:"",eis:"",ce:[null,null,null],lot:null,cur:[12000,12000,24000]};
+function save(){store("vicenteAlicante2b",S)}
+
+var STEP_NAMES=["Arrival","Round A","Round B","Round C","El Gordo","Your results"];
+function renderSteps(){$("#steps").innerHTML=STEP_NAMES.map(function(n,i){return '<span class="'+(i===S.stage?"on":(i<S.stage?"done":""))+'">'+n+'</span>'}).join("")}
+function renderStage(){renderSteps();var st=$("#stage");
+  if(S.stage===0){st.innerHTML=introHTML();bindIntro();return}
+  if(S.stage>=1&&S.stage<=3){st.innerHTML=ceHTML(S.stage-1);bindCE(S.stage-1);return}
+  if(S.stage===4){st.innerHTML=lotHTML();bindLot();return}
+  st.innerHTML=resultsHTML();bindResults();}
+function go(n){S.stage=n;save();renderStage();window.scrollTo({top:$("#steps").offsetTop-10})}
+
+function introHTML(){
+  return '<div class="card stack"><h2>A coin decides Vicente\'s salary</h2>'+
+  '<p>Vicente is about to finish the Master at the UA and has two kinds of job offer. One pays a <strong>fixed salary</strong>. The other pays depending on a <strong>coin toss</strong>: cara (heads) or cruz (tails), 50–50.</p>'+
+  '<div class="grid2">'+
+   '<div class="read y2"><div class="k">Cara (heads), probability ½</div><div class="v">€18,000</div></div>'+
+   '<div class="read y1"><div class="k">Cruz (tails), probability ½</div><div class="v">€6,000</div></div>'+
+  '</div>'+
+  '<p>On average the coin pays €12,000. The question in each round is: <strong>what is the lowest fixed salary for which Vicente would rather have the contract than the coin?</strong> That number is Vicente\'s certainty equivalent. The further it is below the average, the more he dislikes risk.</p>'+
+  '<div class="note"><strong>How to play.</strong> Three rounds ask for a certainty equivalent, with different coins. A final round asks a yes-or-no question about the Christmas lottery. Choose as if this were your own salary. There are no right answers. Vicente lives on this salary alone, with no savings to fall back on.</div>'+
+  '<div class="grid2">'+
+   '<div class="stack" style="gap:6px"><label class="lab" for="nick">Your nickname (optional)</label><input type="text" id="nick" maxlength="30" placeholder="e.g. Lucía G." value="'+esc(S.nick)+'"></div>'+
+   '<div class="stack" style="gap:6px"><label class="lab" for="eis">Your EIS from Game 1 (optional)</label><input type="number" id="eis" min="0" max="10" step="0.01" placeholder="e.g. 0.45" value="'+esc(S.eis)+'"></div>'+
+  '</div>'+
+  '<div class="row"><button class="btn red" id="start">Start Round A</button>'+(S.lot!==null&&S.ce[2]!==null?'<button class="btn ghost" id="toRes">See my last results</button>':'')+'</div></div>';
+}
+function bindIntro(){
+  $("#nick").addEventListener("input",function(e){S.nick=e.target.value;save()});
+  $("#eis").addEventListener("input",function(e){S.eis=e.target.value;save()});
+  $("#start").addEventListener("click",function(){go(1)});
+  var t=$("#toRes");if(t)t.addEventListener("click",function(){go(5)});
+}
+
+/* ----- rounds A, B, C ----- */
+function ceHTML(k){
+  var r=ROUNDS[k],lo=r.L*1000,hi=r.H*1000,mean=(lo+hi)/2;
+  return '<div class="card stack"><div class="eyebrow">Round '+r.key+' of 3</div>'+
+  '<h2>'+r.title+'</h2><p>'+r.text+'</p>'+
+  '<div class="grid3"><div class="read y2"><div class="k">Cara, probability ½</div><div class="v">'+eur(hi)+'</div></div><div class="read y1"><div class="k">Cruz, probability ½</div><div class="v">'+eur(lo)+'</div></div><div class="read sv"><div class="k">Average of the coin</div><div class="v">'+eur(mean)+'</div></div></div>'+
+  '<div class="stack" style="gap:4px"><label class="lab" for="ce">What is the <em>lowest</em> fixed salary for which Vicente takes the contract instead of tossing the coin?</label>'+
+  '<input type="range" id="ce" min="'+lo+'" max="'+hi+'" step="'+r.step+'" value="'+Math.min(Math.max(S.cur[k],lo),hi)+'">'+
+  '<div class="slider-ends"><span>'+eur(lo)+': I hate risk</span><span>'+eur(mean)+': the average</span><span>'+eur(hi)+'</span></div></div>'+
+  '<div class="grid3"><div class="read sv"><div class="k">Your certainty equivalent</div><div class="v" id="ce-v"></div></div>'+
+   '<div class="read y1"><div class="k">Risk premium (average − CE)</div><div class="v" id="pi-v"></div></div>'+
+   '<div class="read y2"><div class="k">Implied σ (CRRA)</div><div class="v" id="sg-v"></div></div></div>'+
+  '<svg class="chart" id="ce-chart" viewBox="0 0 720 300" role="img" aria-label="Utility curve, chord and your certainty equivalent"></svg>'+
+  '<div class="note" id="ce-note"></div>'+
+  '<div class="row" style="justify-content:space-between"><button class="btn ghost" id="back">Back</button><button class="btn red" id="confirm">'+(k<2?"Confirm and go to Round "+ROUNDS[k+1].key:"Confirm and go to the last round")+'</button></div></div>';
+}
+function bindCE(k){
+  var r=ROUNDS[k],sl=$("#ce"),mean=(r.L+r.H)/2*1000;
+  function upd(){var ce=+sl.value;S.cur[k]=ce;save();var sg=sigmaFromCE(ce/1000,r.L,r.H);
+    $("#ce-v").textContent=eur(ce);$("#pi-v").textContent=eur(mean-ce);$("#sg-v").textContent=sgTxt(sg);
+    var n=$("#ce-note");
+    if(ce>mean)n.innerHTML="You need <strong>more</strong> than the average to give up the coin: <strong>risk loving</strong>. Your utility is convex, so the chord lies <em>above</em> the curve and Jensen's inequality flips.";
+    else if(ce===mean)n.innerHTML="At the average Vicente is <strong>risk neutral</strong>: utility is linear (σ = 0), the chord lies on the curve, and only the average matters.";
+    else n.innerHTML="Vicente would give up <strong>"+eur(mean-ce)+"</strong> of expected income to avoid the coin. On the chart, that is the red gap between the certainty equivalent and the average, both at the height of the chord.";
+    drawJ($("#ce-chart"),{s:Math.max(-3,Math.min(sg.v,15)),L:r.L,H:r.H,p:.5,norm:(r.L+r.H)/2,h:300});
+  }
+  sl.addEventListener("input",upd);upd();
+  $("#back").addEventListener("click",function(){go(k)});
+  $("#confirm").addEventListener("click",function(){S.ce[k]=+sl.value;go(k+2)});
+}
+
+/* ----- round D: lottery ----- */
+function lotHTML(){
+  return '<div class="card stack"><div class="eyebrow">Last round · Lotería de Navidad</div><h2>A décimo of El Gordo?</h2>'+
+  '<p>It is December and everyone at the UA is sharing décimos for the Christmas lottery, drawn on 22 December. A décimo costs <strong>€20</strong>. Only 70% of ticket sales come back as prizes, so on average a décimo pays back <strong>€14</strong>.</p>'+
+  '<div class="grid3"><div class="read y1"><div class="k">Price of a décimo</div><div class="v">€20</div></div><div class="read y2"><div class="k">Average prize per décimo</div><div class="v">€14</div></div><div class="read sv"><div class="k">Expected gain</div><div class="v">−€6</div></div></div>'+
+  '<p><strong>Does Vicente buy one?</strong></p>'+
+  '<div class="choice" role="group" aria-label="Buy a décimo?">'+
+   '<button data-v="yes" aria-pressed="'+(S.lot==="yes")+'">Yes, he buys a décimo<small>Pay €20 for a small chance of a big prize</small></button>'+
+   '<button data-v="no" aria-pressed="'+(S.lot==="no")+'">No, he keeps the €20<small>A sure €20 is better</small></button>'+
+  '</div>'+
+  '<div class="row" style="justify-content:space-between"><button class="btn ghost" id="back">Back</button><button class="btn red" id="confirm" '+(S.lot?"":"disabled")+'>See my results</button></div></div>';
+}
+function bindLot(){
+  $(".choice").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;S.lot=b.dataset.v;save();
+    Array.prototype.forEach.call(document.querySelectorAll(".choice button"),function(x){x.setAttribute("aria-pressed",x===b?"true":"false")});$("#confirm").disabled=false});
+  $("#back").addEventListener("click",function(){go(3)});
+  $("#confirm").addEventListener("click",function(){go(5)});
+}
+
+/* ----- results ----- */
+function analyse(){
+  var sg=ROUNDS.map(function(r,i){return sigmaFromCE(S.ce[i]/1000,r.L,r.H)});
+  var sig=(sg[0].v+sg[1].v+sg[2].v)/3;
+  var piA=12-S.ce[0]/1000,piC=24-S.ce[2]/1000;
+  var e=parseFloat(S.eis);
+  return {sg:sg,sig:sig,piA:piA,piC:piC,ratio:piA>0.05?piC/piA:NaN,eis:(isFinite(e)&&e>0)?e:null};
+}
+function resultsHTML(){
+  var Z=analyse(),s=Z.sig;
+  var tiles='<div class="grid4">'+
+   '<div class="tile hl"><div class="k">Your risk aversion σ</div><div class="v">'+s.toFixed(2)+'</div><div class="s">average of the three rounds</div></div>'+
+   ROUNDS.map(function(r,i){return '<div class="tile"><div class="k">σ from Round '+r.key+'</div><div class="v">'+sgTxt(Z.sg[i])+'</div><div class="s">CE '+eur(S.ce[i])+' · π '+eur((r.L+r.H)/2*1000-S.ce[i])+'</div></div>'}).join("")+
+  '</div>';
+  var risk=s<-0.05?"Your certainty equivalents are on average <strong>above</strong> the average payoff: you <strong>like</strong> risk. Your utility is convex and Jensen's inequality runs the other way, <span class=\"m\">E[u(c)] &gt; u(E[c])</span>.":
+    (s<0.5?"You are close to <strong>risk neutral</strong>: your utility is almost linear, so a coin is worth about its average.":(s<3?"Your risk aversion is in the range macroeconomists usually calibrate (σ between 1 and 3).":"You are <strong>strongly risk averse</strong>. Values like yours are what asset-pricing models need to explain the equity premium (L18)."));
+  var spread=Math.abs(Z.sg[0].v-Z.sg[1].v);
+  var spreadTxt="<strong>Rounds A and B</strong> have the same average and different spreads. Any single CRRA utility gives the same σ for both. Yours differ by "+spread.toFixed(2)+(spread<0.5?": consistent with one CRRA σ.":". A gap this size means one curvature parameter does not describe both choices: your attitude to risk depends on the size of the risk, which CRRA does not allow at a given income.");
+  var scaleTxt;
+  if(!isFinite(Z.ratio))scaleTxt="<strong>Round C</strong> doubles every amount in Round A. With a zero or negative risk premium in Round A, the scaling test cannot be read.";
+  else{scaleTxt="<strong>Round C</strong> doubles every amount in Round A. CRRA predicts your risk premium doubles exactly, from "+eur(Z.piA*1000)+" to "+eur(Z.piA*2000)+". Yours went to "+eur(Z.piC*1000)+", a factor of <strong>"+Z.ratio.toFixed(2)+"</strong>. ";
+    scaleTxt+=Z.ratio>=1.7&&Z.ratio<=2.3?"That is close to 2: <strong>constant relative risk aversion</strong> fits you.":(Z.ratio>2.3?"That is more than double: your relative risk aversion <strong>rises</strong> with the stakes, closer to CARA, which predicts a factor between 2 and 4 (about 3 at these stakes).":"That is less than double: your relative risk aversion <strong>falls</strong> as the stakes grow.");}
+  var lot=S.lot==="yes"?
+    "You bought the décimo. It loses €6 on average, so with concave or linear utility Jensen gives <span class=\"m\">E[u(w+X)] ≤ u(w+E X) &lt; u(w)</span>: a risk-averse expected-utility maximiser never buys. Your σ = "+s.toFixed(2)+" from Rounds A–C cannot explain it. Explanations that can: utility that is convex over large gains (Friedman–Savage, 1948), or motives outside expected utility, such as enjoying the draw or not wanting to miss out if your office's number wins.":
+    "You kept the €20. That fits any risk-averse or risk-neutral expected-utility maximiser: a gamble with a negative expected value is worth less than its price, by Jensen's inequality plus the fact that its average is already negative.";
+  var eisBlock;
+  if(Z.eis){var s2=1/Z.eis;
+    eisBlock='<div class="grid2"><div class="read y1"><div class="k">σ from risk (this game)</div><div class="v">'+s.toFixed(2)+'</div></div><div class="read y2"><div class="k">σ = 1/EIS from time (Game 1)</div><div class="v">'+s2.toFixed(2)+'</div></div></div>'+
+    '<p>'+(s>0&&Math.abs(Math.log(s/s2))<Math.log(1.5)?"The two numbers are close: your choices are consistent with a single CRRA σ.":"The two numbers are far apart. CRRA cannot fit both your risk choices and your timing choices with one σ. Epstein–Zin preferences give risk aversion and the EIS separate parameters.")+'</p>';
+  }else eisBlock='<p class="muted">Enter your EIS from Game 1 on the first screen (Play again → Arrival) to compare the two σ\'s.</p>';
+  return '<div class="stack">'+
+   '<div class="card stack"><div class="eyebrow">Your results'+(S.nick?" · "+esc(S.nick):"")+'</div><h2>What the coin says about you</h2>'+tiles+'<p>'+risk+'</p></div>'+
+   '<div class="card stack"><h3>Jensen\'s inequality with your utility</h3><p>Round A drawn with your average σ. The chord gives <span class="m">E[u(c)]</span>, the curve above €12,000 gives <span class="m">u(E[c])</span>. The vertical blue gap is Jensen\'s inequality in utils; the horizontal red gap is the same thing measured in euros, your risk premium.</p>'+
+   '<svg class="chart" id="res-u" viewBox="0 0 720 340" role="img" aria-label="Utility curve with your certainty equivalent"></svg></div>'+
+   '<div class="card stack"><h3>Is one CRRA σ enough for you?</h3><p>Each row is a round: the coin\'s two outcomes, its average (gold), your certainty equivalent (red) and what a CRRA consumer with your average σ would choose (hollow).</p>'+
+   '<svg class="chart" id="res-ce" viewBox="0 0 720 230" role="img" aria-label="Your certainty equivalents against CRRA predictions"></svg>'+
+   '<p>'+spreadTxt+'</p><p>'+scaleTxt+'</p></div>'+
+   '<div class="card stack"><h3>El Gordo</h3><p>'+lot+'</p></div>'+
+   '<div class="card stack"><h3>One σ or two?</h3>'+eisBlock+'</div>'+
+   '<div class="card stack"><h3>Take it to class</h3><textarea class="copy" id="copyTxt" rows="2" readonly></textarea>'+
+   '<div class="row"><button class="btn" id="copyBtn">Copy results</button><button class="btn ghost" id="toLab">Open the Jensen lab with my σ</button><button class="btn ghost" id="again">Play again</button><span class="muted" id="copyMsg" aria-live="polite"></span></div></div></div>';
+}
+function bindResults(){
+  var Z=analyse(),s=Math.max(-3,Math.min(Z.sig,15));
+  drawJ($("#res-u"),{s:s,L:6,H:18,p:.5,norm:12,h:340,mark:S.ce[0]/1000});
+  drawCEs($("#res-ce"),Z.sig);
+  var line="VicenteAlicante2; nick="+(S.nick||"anon")+"; CE_A="+S.ce[0]+"; CE_B="+S.ce[1]+"; CE_C="+S.ce[2]+"; sigma_A="+Z.sg[0].v.toFixed(3)+"; sigma_B="+Z.sg[1].v.toFixed(3)+"; sigma_C="+Z.sg[2].v.toFixed(3)+"; sigma_avg="+Z.sig.toFixed(3)+"; premium_ratio_C_A="+(isFinite(Z.ratio)?Z.ratio.toFixed(3):"NA")+"; lottery="+S.lot+"; EIS_game1="+(Z.eis||"NA");
+  $("#copyTxt").value=line;
+  $("#copyBtn").addEventListener("click",function(){var ta=$("#copyTxt");
+    try{navigator.clipboard.writeText(line).then(function(){$("#copyMsg").textContent="Copied."},function(){ta.select();$("#copyMsg").textContent="Press Ctrl/⌘+C to copy the selected text."})}catch(e){ta.select();$("#copyMsg").textContent="Press Ctrl/⌘+C to copy the selected text."}});
+  $("#again").addEventListener("click",function(){S.cur=[12000,12000,24000];S.lot=null;go(0)});
+  $("#toLab").addEventListener("click",function(){J.s=Math.min(10,Math.max(-3,Math.round(Z.sig*10)/10));J.d=6000;J.p=.5;syncJ();location.hash="lab"});
+}
+
+/* utility curve with chord, Jensen gap and certainty equivalent (thousand €) */
+function drawJ(el,o){
+  var s=o.s,L=o.L,H=o.H,p=o.p,m=p*H+(1-p)*L,n=o.norm||12,H0=o.h||340;
+  var x0=Math.max(0.5,L-(H-L)*.25),x1=H+(H-L)*.25;
+  var un=function(c){return (u(c,s)-u(n,s))/up(n,s)};
+  var yhi=un(x1),ylo=Math.max(un(x0),un(L)-0.25*(yhi-un(L)));
+  if(!(yhi>ylo)){yhi=ylo+1}
+  var F=frame({w:720,h:H0,x:[x0,x1],y:[ylo,yhi+(yhi-ylo)*.06],xl:"income (thousand €)",yl:"utility (normalised)",fy:function(t){return t.toFixed(Math.abs(yhi-ylo)<6?1:0)}});
+  var pts=[];for(var c=x0;c<=x1+1e-9;c+=(x1-x0)/160)pts.push([c,un(c)]);
+  var g=F.head+'<g '+F.clip+'><path class="l-ink" d="'+path(pts,F.sx,F.sy)+'"/>';
+  if(H>L){var eu=p*un(H)+(1-p)*un(L),ce=ceP(L,H,p,s),um=un(m);
+    g+='<path class="l-stone" d="'+path([[L,un(L)],[H,un(H)]],F.sx,F.sy)+'"/>';
+    g+='<path class="l-muted" d="'+path([[m,ylo],[m,Math.max(um,eu)]],F.sx,F.sy)+'"/><path class="l-muted" d="'+path([[ce,ylo],[ce,eu]],F.sx,F.sy)+'"/>';
+    g+='<path class="l-sea" style="stroke-width:5" d="'+path([[m,eu],[m,um]],F.sx,F.sy)+'"/>';
+    g+='<path class="l-tile" style="stroke-width:5" d="'+path([[ce,eu],[m,eu]],F.sx,F.sy)+'"/></g>';
+    g+='<circle cx="'+F.sx(L)+'" cy="'+F.sy(un(L))+'" r="5" class="p-stone"/><circle cx="'+F.sx(H)+'" cy="'+F.sy(un(H))+'" r="5" class="p-stone"/>';
+    g+='<text class="lbl-s" x="'+(F.sx(L)+8)+'" y="'+(F.sy(un(L))+16)+'">cruz</text><text class="lbl-s" x="'+(F.sx(H)-8)+'" y="'+(F.sy(un(H))+18)+'" text-anchor="end">cara</text>';
+    g+='<circle cx="'+F.sx(m)+'" cy="'+F.sy(um)+'" r="5" class="p-sea"/><circle cx="'+F.sx(m)+'" cy="'+F.sy(eu)+'" r="5" class="p-stone"/><circle cx="'+F.sx(ce)+'" cy="'+F.sy(eu)+'" r="6" class="p-tile"/>';
+    var right=ce<=m;
+    var umTop=um>=eu,tx=F.sx(m)+(right?10:-10),ta=right?"start":"end";
+    g+='<text class="lbl" x="'+tx+'" y="'+(umTop?F.sy(um)-8:F.sy(um)+18)+'" text-anchor="'+ta+'">u(E c)</text>';
+    g+='<text class="lbl" x="'+tx+'" y="'+(umTop?F.sy(eu)+18:F.sy(eu)-8)+'" text-anchor="'+ta+'">E u(c)</text>';
+    g+='<text class="lbl" x="'+(F.sx(ce)+(right?-8:8))+'" y="'+(F.sy(eu)-10)+'" text-anchor="'+(right?"end":"start")+'">CE = '+eur(ce*1000)+'</text>';
+    if(o.mark!=null&&Math.abs(o.mark-ce)>0.05)g+='<circle cx="'+F.sx(o.mark)+'" cy="'+F.sy(un(o.mark))+'" r="6" class="p-hollow"/>';
+  }else g+='</g>';
+  el.innerHTML=g;
+}
+/* dot plot of the three rounds */
+function drawCEs(el,sig){
+  var F=frame({w:720,h:230,x:[4,38],y:[0,3],left:92,bottom:40,yt:[],xt:[6,9,12,15,18,24,30,36],xl:"thousand €"});
+  var g=F.head;
+  ROUNDS.forEach(function(r,i){var y=2.5-i,mean=(r.L+r.H)/2,pred=ceOf(r.L,r.H,sig),ce=S.ce[i]/1000;
+    g+='<text class="lbl-s" x="'+(F.L-10)+'" y="'+(F.sy(y)+4)+'" text-anchor="end">Round '+r.key+'</text>';
+    g+='<path class="l-muted" d="'+path([[r.L,y],[r.H,y]],F.sx,F.sy)+'"/>';
+    g+='<circle cx="'+F.sx(r.L)+'" cy="'+F.sy(y)+'" r="3.5" class="p-ink"/><circle cx="'+F.sx(r.H)+'" cy="'+F.sy(y)+'" r="3.5" class="p-ink"/>';
+    g+='<rect x="'+(F.sx(mean)-2)+'" y="'+(F.sy(y)-10)+'" width="4" height="20" class="p-stone"/>';
+    if(isFinite(pred)&&pred>=r.L-1e-9&&pred<=r.H+1e-9)g+='<circle cx="'+F.sx(pred)+'" cy="'+F.sy(y)+'" r="8" class="p-hollow"/>';
+    g+='<circle cx="'+F.sx(ce)+'" cy="'+F.sy(y)+'" r="6" class="p-tile"/>';
+  });
+  el.innerHTML=g;
+}
+
+/* ---------- labs ---------- */
+var J={s:2,d:6000,p:.5};
+function syncJ(){$("#j-sigma").value=J.s;$("#j-d").value=J.d;$("#j-p").value=J.p;renderJ()}
+function renderJ(){
+  var s=J.s,d=J.d/1000,p=J.p,L=12-d,H=12+d,m=p*H+(1-p)*L,ce=d>0?ceP(L,H,p,s):12,vr=4*p*(1-p)*d*d,ap=.5*s/m*vr;
+  $("#j-sigma-v").textContent=s.toFixed(1);$("#j-d-v").textContent=eur(J.d);$("#j-p-v").textContent=p.toFixed(2);
+  $("#j-m").textContent=eur(m*1000);$("#j-ce").textContent=eur(ce*1000);$("#j-pi").textContent=eur((m-ce)*1000);$("#j-ap").textContent=eur(ap*1000);
+  var sh=$("#j-shape");
+  if(Math.abs(s)<0.05){sh.className="verdict";sh.innerHTML="σ = 0: <strong>linear</strong> utility. The chord lies on the curve, E[u(c)] = u(E[c]), and the coin is worth exactly its average. Risk neutral.";}
+  else if(s>0){sh.className="verdict ok";sh.innerHTML="σ &gt; 0: <strong>concave</strong> utility. The chord lies below the curve, E[u(c)] &lt; u(E[c]), so Vicente values the coin at less than its average. Risk averse.";}
+  else{sh.className="verdict";sh.innerHTML="σ &lt; 0: <strong>convex</strong> utility. The chord lies above the curve, E[u(c)] &gt; u(E[c]), and the risk premium turns negative: Vicente would pay to <em>keep</em> the risk. Risk loving.";}
+  var note=d===0?"With Δ = 0 there is no risk, so there is nothing for Jensen's inequality to do.":
+    ((Math.abs(s-2)<0.05&&Math.abs(p-.5)<0.01)?"Arrow–Pratt happens to be exact here: with σ = 2 and a 50–50 coin of ±Δ, CE is the harmonic mean of the outcomes, so π = Δ²/c̄ exactly. Move σ or p and it becomes an approximation.":
+    "Arrow–Pratt is a second-order approximation: accurate for small Δ, drifting as Δ grows. Compare it with the exact risk premium. Moving p changes both the average and the variance, 4p(1 − p)Δ².");
+  $("#j-note").textContent=note;
+  drawJ($("#j-chart"),{s:s,L:L,H:H,p:p,norm:12,h:340});
+  /* premium vs spread */
+  var SG=[[0.5,"l-stone"],[1,"l-ink"],[2,"l-tile"],[5,"l-sea"]];
+  var F=frame({w:720,h:260,x:[0,11],y:[0,11],xl:"spread Δ (thousand €)",yl:"risk premium π (k€)",bottom:42});
+  var g=F.head+'<g '+F.clip+'>';
+  SG.forEach(function(q){var pts=[];for(var x=0;x<=11.0001;x+=0.1)pts.push([x,12-ceOf(12-x,12+x,q[0])]);g+='<path class="'+q[1]+'" d="'+path(pts,F.sx,F.sy)+'"/>'});
+  g+='</g>';
+  var pm=d>0?12-ceOf(L,H,s):0;g+='<circle cx="'+F.sx(d)+'" cy="'+F.sy(Math.max(-0.2,Math.min(pm,11)))+'" r="6" class="p-hollow"/>';
+  $("#j-chart2").innerHTML=g;
+  simReset();
+}
+/* coin simulator */
+var SIM;
+function simReset(){SIM={n:0,h:0,sc:0,su:0,hist:[],pts:[]};simRender()}
+function simToss(k){var d=J.d/1000,L=12-d,H=12+d,s=J.s;
+  for(var i=0;i<k;i++){var cara=Math.random()<J.p,c=cara?H:L;SIM.n++;if(cara)SIM.h++;SIM.sc+=c;SIM.su+=u(c,s);SIM.hist.push(cara);if(SIM.hist.length>40)SIM.hist.shift();
+    if(SIM.pts.length<1500)SIM.pts.push([SIM.n,SIM.sc/SIM.n,uinv(SIM.su/SIM.n,s)])}
+  simRender()}
+function simRender(){
+  var d=J.d/1000,L=12-d,H=12+d,p=J.p,m=p*H+(1-p)*L,ce=d>0?ceP(L,H,p,J.s):12;
+  $("#s-n").textContent=SIM.n?SIM.n+" tosses · "+SIM.h+" cara, "+(SIM.n-SIM.h)+" cruz":"No tosses yet";
+  $("#s-coins").innerHTML=SIM.hist.map(function(h){return '<span class="'+(h?"h":"t")+'" title="'+(h?"cara":"cruz")+'">'+(h?"C":"X")+'</span>'}).join("");
+  if(SIM.n){var a=SIM.sc/SIM.n,c=uinv(SIM.su/SIM.n,J.s);$("#s-avg").textContent=eur(a*1000);$("#s-ce").textContent=eur(c*1000);$("#s-gap").textContent=eur((a-c)*1000)}
+  else{$("#s-avg").textContent="—";$("#s-ce").textContent="—";$("#s-gap").textContent="—"}
+  var N=Math.max(20,SIM.pts.length?SIM.pts[SIM.pts.length-1][0]:0);
+  var ylo=d>0?L:11,yhi=d>0?H:13;
+  var F=frame({w:720,h:280,x:[0,N],y:[ylo,yhi],xl:"number of tosses",yl:"thousand €",fy:function(t){return t.toFixed(1)},bottom:42});
+  var g=F.head+'<g '+F.clip+'><path class="l-muted" d="'+path([[0,m],[N,m]],F.sx,F.sy)+'"/><path class="l-muted" d="'+path([[0,ce],[N,ce]],F.sx,F.sy)+'"/>';
+  if(SIM.pts.length){g+='<path class="l-stone" d="'+path(SIM.pts.map(function(q){return [q[0],q[1]]}),F.sx,F.sy)+'"/><path class="l-tile" d="'+path(SIM.pts.map(function(q){return [q[0],q[2]]}),F.sx,F.sy)+'"/>'}
+  g+='</g><text class="lbl-s" x="'+(F.W-F.R-4)+'" y="'+(F.sy(m)-6)+'" text-anchor="end">E[c] = '+eur(m*1000)+'</text><text class="lbl-s" x="'+(F.W-F.R-4)+'" y="'+(F.sy(ce)+14)+'" text-anchor="end">CE = '+eur(ce*1000)+'</text>';
+  $("#s-chart").innerHTML=g;
+}
+function bindLab(){
+  $("#j-sigma").addEventListener("input",function(e){J.s=+e.target.value;renderJ()});
+  $("#j-d").addEventListener("input",function(e){J.d=+e.target.value;renderJ()});
+  $("#j-p").addEventListener("input",function(e){J.p=+e.target.value;renderJ()});
+  $("#s-1").addEventListener("click",function(){simToss(1)});
+  $("#s-100").addEventListener("click",function(){simToss(100)});
+  $("#s-0").addEventListener("click",simReset);
+  syncJ();
+}
+
+var VIEWS=["juego","lab","chuleta"];
+function show(v){if(VIEWS.indexOf(v)<0)v="juego";VIEWS.forEach(function(n){$("#view-"+n).hidden=(n!==v);$("#tab-"+n).setAttribute("aria-selected",n===v?"true":"false")})}
+document.querySelector("nav.tabs").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;var v=b.dataset.view;if(location.hash==="#"+v)show(v);else location.hash=v});
+window.addEventListener("hashchange",function(){show(location.hash.slice(1))});
+if(GAME1_URL){$("#game1-link").href=GAME1_URL;$("#game1-link-wrap").hidden=false}
+renderStage();bindLab();show(location.hash.slice(1));
+})();
+</script>
+
+</body>
+</html>
